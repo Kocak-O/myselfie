@@ -15,7 +15,7 @@ C\* Symbols: `integer`, `character`, `string`, `identifier`, `,`, `;`, `(`, `)`,
 with:
 
 ```
-integer    = digit { digit } .
+integer    = digit { digit } | "0x" { hex } .
 
 character  = "'" printable_character "'" .
 
@@ -29,51 +29,63 @@ and:
 ```
 digit  = "0" | ... | "9" .
 
+hex	= "0" | ... | "9" | "A" | ... | "F" .
+
 letter = "a" | ... | "z" | "A" | ... | "Z" .
 ```
 
 C\* Grammar:
 
 ```
-cstar      = { variable [ initialize ] ";" | procedure } .
+cstar             = { type identifier { array } |
+                      [ "=" [ cast ] [ "-" ] ( integer | character ) ] ";" |
+                    ( "void" | type ) identifier procedure } .
 
-variable   = type identifier .
+type              = "uint64_t" [ "*" ] | "struct".
 
-type       = "uint64_t" [ "*" ] .
+cast              = "(" type ")" .
 
-initialize = "=" [ cast ] [ "-" ] value .
+procedure         = "(" [ variable { "," variable } [ "," "..." ] ] ")" ( ";" |
+                    "{" { variable ";" } { statement } "}" ) .
 
-cast       = "(" type ")" .
+variable          = type identifier .
 
-value      = integer | character .
+statement         = ( [ "*" ] identifier | "*" "(" and_or ")" | identifier { array } ) "=" and_or ";" |
+                    call ";" | while | for | if | return ";" .
 
-statement  = assignment ";" | if | while | call ";" | return ";" .
+call              = identifier "(" [ and_or { "," and_or } ] ")" .
 
-assignment = ( [ "*" ] identifier | "*" "(" expression ")" ) "=" expression .
+and_or		  = expression
+		    [ ( "&" ) | ( "|" ) expression ] .
 
-expression = arithmetic [ ( "==" | "!=" | "<" | ">" | "<=" | ">=" ) arithmetic ] .
+expression        = shift
+                    [ ( "==" | "!=" | "<" | ">" | "<=" | ">=" ) shift ] .
 
-arithmetic = term { ( "+" | "-" ) term } .
+shift		  = simple_expression { ( "<<" | ">>" ) simple_expression } .
 
-term       = factor { ( "*" | "/" | "%" ) factor } .
+array		  = "[" and_or "]"
 
-factor     = [ cast ] [ "-" ] [ "*" ]
-             ( "sizeof" "(" type ")" | literal | identifier | call | "(" expression ")" ) .
+struct		  = "{" { variable ";" } "};"
 
-literal    = value | string .
+simple_expression = term { ( "+" | "-" ) term } .
 
-if         = "if" "(" expression ")"
-               ( statement | "{" { statement } "}" )
-             [ "else"
-               ( statement | "{" { statement } "}" ) ] .
+term              = factor { ( "*" | "/" | "%" ) factor } .
 
-while      = "while" "(" expression ")"
-               ( statement | "{" { statement } "}" ) .
 
-procedure  = ( type | "void" ) identifier "(" [ variable { "," variable } [ "," "..." ] ] ")"
-             ( ";" | "{" { variable ";" } { statement } "}" ) .
+factor            = [ cast ] [ "-" ] [ "*" ] [ "~" ]
+                    ( integer | character | string |
+                      identifier { array } | call | "(" and_or ")" ) .
 
-call       = identifier "(" [ expression { "," expression } ] ")" .
+while             = "while" "(" and_or ")"
+                      ( statement | "{" { statement } "}" ) .
 
-return     = "return" [ expression ] .
+for               = "for" "(" statement ";" and_or ";" and_or ")"
+                      ( statement | "{" { statement } "}" ) .
+
+if                = "if" "(" and_or ")"
+                      ( statement | "{" { statement } "}" )
+                    [ "else"
+                      ( statement | "{" { statement } "}" ) ] .
+
+return            = "return" [ and_or ] .
 ```
