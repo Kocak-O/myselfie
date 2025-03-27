@@ -3843,331 +3843,331 @@ uint64_t identifier_or_keyword() {
         return SYM_IDENTIFIER;
 }
 
-void get_symbol() {
-    uint64_t i;
-
-    // reset previously scanned symbol
-    symbol = SYM_EOF;
-
-    if (find_next_character() != CHAR_EOF) {
-        if (symbol != SYM_DIVISION) {
-            // '/' may have already been recognized
-            // while looking for whitespace and "//"
-
-            // start state of finite state machine
-            // for recognizing C* symbols is here
-            if (is_letter(character)) {
-                // accommodate identifier and null for termination
-                identifier = string_alloc(MAX_IDENTIFIER_LENGTH);
-
-                i = 0;
-
-                while (is_character_letter_or_digit_or_underscore()) {
-                    if (i >= MAX_IDENTIFIER_LENGTH) {
-                        syntax_error_message("identifier too long");
-
-                        exit(EXITCODE_SCANNERERROR);
-                    }
-
-                    store_character(identifier, i, character);
-
-                    i = i + 1;
-
-                    get_character();
-                }
-
-                store_character(identifier, i, 0); // null-terminated string
-
-                symbol = identifier_or_keyword();
-
-            } else if (is_digit(character)) {
-
-                if(character == '0')
-                    literal = 0;
-
-                while(character == '0')
-                    get_character();
-
-                if(character == 'x') {
-
-                    get_character();
-                    integer = string_alloc(MAX_HEX_INTEGER_LENGTH);
-                    i = 0;
-
-                    while (is_hex(character)) {
-                        if (i >= MAX_HEX_INTEGER_LENGTH) {
-                            syntax_error_message("integer out of bound");
-
-                            exit(EXITCODE_SCANNERERROR);
-                        }
-
-                        store_character(integer, i, character);
-
-                        i = i + 1;
-
-                        get_character();
-                    }
-
-                    store_character(integer, i, 0); // null-terminated string
-                    literal = hex_atoi(integer);
-                }
-                else {
-
-                    integer = string_alloc(MAX_INTEGER_LENGTH);
-                    i = 0;
-
-                    while (is_digit(character)) {
-                        if (i >= MAX_INTEGER_LENGTH) {
-                            if (integer_is_signed)
-                                syntax_error_message("signed integer out of bound");
-                            else
-                                syntax_error_message("integer out of bound");
-
-                            exit(EXITCODE_SCANNERERROR);
-                        }
-
-                        store_character(integer, i, character);
-
-                        i = i + 1;
-
-                        get_character();
-                    }
-
-                    store_character(integer, i, 0); // null-terminated string
-
-                    if(i > 0)
-                        literal = atoi(integer);
-
-                    if (integer_is_signed)
-                        if (literal > INT64_MIN) {
-                            syntax_error_message("signed integer out of bound");
-
-                            exit(EXITCODE_SCANNERERROR);
-                        }
-
-                }
-
-                symbol = SYM_INTEGER;
-
-            } else if (character == CHAR_SINGLEQUOTE) {
-                get_character();
-
-                literal = 0;
-
-                if (character == CHAR_EOF) {
-                    syntax_error_message("reached end of file looking for a character literal");
-
-                    exit(EXITCODE_SCANNERERROR);
-                } else
-                    literal = character;
-
-                get_character();
-
-                if (character == CHAR_SINGLEQUOTE)
-                    get_character();
-                else if (character == CHAR_EOF) {
-                    syntax_error_character(CHAR_SINGLEQUOTE);
-
-                    exit(EXITCODE_SCANNERERROR);
-                } else
-                    syntax_error_character(CHAR_SINGLEQUOTE);
-
-                symbol = SYM_CHARACTER;
-
-            } else if (character == CHAR_DOUBLEQUOTE) {
-                get_character();
-
-                // accommodate string and null for termination,
-                // allocate zeroed memory since strings are emitted
-                // in words but may end non-word-aligned
-                string = string_alloc(MAX_STRING_LENGTH);
-
-                i = 0;
-
-                while (is_character_not_double_quote_or_new_line_or_eof()) {
-                    if (i >= MAX_STRING_LENGTH) {
-                        syntax_error_message("string too long");
-
-                        exit(EXITCODE_SCANNERERROR);
-                    }
-
-                    if (character == CHAR_BACKSLASH)
-                        handle_escape_sequence();
-
-                    store_character(string, i, character);
-
-                    i = i + 1;
-
-                    get_character();
-                }
-
-                if (character == CHAR_DOUBLEQUOTE)
-                    get_character();
-                else {
-                    syntax_error_character(CHAR_DOUBLEQUOTE);
-
-                    exit(EXITCODE_SCANNERERROR);
-                }
-
-                store_character(string, i, 0); // null-terminated string
-
-                symbol = SYM_STRING;
-
-            } else if (character == CHAR_COMMA) {
-                get_character();
-
-                symbol = SYM_COMMA;
-
-            } else if (character == CHAR_SEMICOLON) {
-                get_character();
-
-                symbol = SYM_SEMICOLON;
-
-            } else if (character == CHAR_LPARENTHESIS) {
-                get_character();
-
-                symbol = SYM_LPARENTHESIS;
-
-            } else if (character == CHAR_RPARENTHESIS) {
-                get_character();
-
-                symbol = SYM_RPARENTHESIS;
-
-            } else if (character == CHAR_LBRACE) {
-                get_character();
-
-                symbol = SYM_LBRACE;
-
-            } else if (character == CHAR_RBRACE) {
-                get_character();
-
-                symbol = SYM_RBRACE;
-
-            } else if (character == CHAR_LBRACKET) {
-                get_character();
-
-                symbol = SYM_LBRACKET;
-
-            } else if (character == CHAR_RBRACKET) {
-                get_character();
-
-                symbol = SYM_RBRACKET;
-
-            } else if (character == CHAR_PLUS) {
-                get_character();
-
-                symbol = SYM_PLUS;
-
-            } else if (character == CHAR_DASH) {
-                get_character();
-                if(character == CHAR_GT)
-                    symbol = SYM_ARROW;
-                else
-                    symbol = SYM_MINUS;
-
-            } else if (character == CHAR_ASTERISK) {
-                get_character();
-
-                symbol = SYM_ASTERISK;
-
-            } else if (character == CHAR_AND) {
-                get_character();
-
-                symbol = SYM_AND;
-
-            } else if (character == CHAR_PIPE) {
-                get_character();
-
-                symbol = SYM_OR;
-
-            } else if (character == CHAR_TILDE) {
-                get_character();
-
-                symbol = SYM_XORI;
-
-            } else if (character == CHAR_PERCENTAGE) {
-                get_character();
-
-                symbol = SYM_REMAINDER;
-
-            } else if (character == CHAR_EQUAL) {
-                get_character();
-
-                if (character == CHAR_EQUAL) {
-                    get_character();
-
-                    symbol = SYM_EQUALITY;
-                } else
-                    symbol = SYM_ASSIGN;
-
-            } else if (character == CHAR_EXCLAMATION) {
-                get_character();
-
-                if (character == CHAR_EQUAL)
-                    get_character();
-                else
-                    syntax_error_character(CHAR_EQUAL);
-
-                symbol = SYM_NOTEQ;
-
-            } else if (character == CHAR_LT) {
-                get_character();
-
-                if (character == CHAR_EQUAL) {
-                    get_character();
-
-                    symbol = SYM_LEQ;
-                } else if (character == CHAR_LT) {
-                    get_character();
-
-                    symbol = SYM_LSH;
-                } else
-                    symbol = SYM_LT;
-
-            } else if (character == CHAR_GT) {
-                get_character();
-
-                if (character == CHAR_EQUAL) {
-                    get_character();
-
-                    symbol = SYM_GEQ;
-                } else if (character == CHAR_GT) {
-                    get_character();
-
-                    symbol = SYM_RSH;
-                } else
-                    symbol = SYM_GT;
-
-            } else if (character == CHAR_DOT) {
-                get_character();
-
-                if (character == CHAR_DOT) {
-                    get_character();
-
-                    if (character == CHAR_DOT)
-                        get_character();
-                    else
-                        syntax_error_character(CHAR_DOT);
-                } else
-                    syntax_error_character(CHAR_DOT);
-
-                symbol = SYM_ELLIPSIS;
-
-            } else {
-                print_line_number("syntax error", line_number);
-                print("found unknown character ");
-                print_character(character);
-                println();
-
-                number_of_syntax_errors = number_of_syntax_errors + 1;
-
-                exit(EXITCODE_SCANNERERROR);
-            }
-        }
-
-        number_of_scanned_symbols = number_of_scanned_symbols + 1;
-    }
-}
+   void get_symbol() {
+       uint64_t i;
+   
+       // reset previously scanned symbol
+       symbol = SYM_EOF;
+   
+       if (find_next_character() != CHAR_EOF) {
+           if (symbol != SYM_DIVISION) {
+               // '/' may have already been recognized
+               // while looking for whitespace and "//"
+   
+               // start state of finite state machine
+               // for recognizing C* symbols is here
+               if (is_letter(character)) {
+                   // accommodate identifier and null for termination
+                   identifier = string_alloc(MAX_IDENTIFIER_LENGTH);
+   
+                   i = 0;
+   
+                   while (is_character_letter_or_digit_or_underscore()) {
+                       if (i >= MAX_IDENTIFIER_LENGTH) {
+                           syntax_error_message("identifier too long");
+   
+                           exit(EXITCODE_SCANNERERROR);
+                       }
+   
+                       store_character(identifier, i, character);
+   
+                       i = i + 1;
+   
+                       get_character();
+                   }
+   
+                   store_character(identifier, i, 0); // null-terminated string
+   
+                   symbol = identifier_or_keyword();
+   
+               } else if (is_digit(character)) {
+   
+                   if(character == '0')
+                       literal = 0;
+   
+                   while(character == '0')
+                       get_character();
+   
+                   if(character == 'x') {
+   
+                       get_character();
+                       integer = string_alloc(MAX_HEX_INTEGER_LENGTH);
+                       i = 0;
+   
+                       while (is_hex(character)) {
+                           if (i >= MAX_HEX_INTEGER_LENGTH) {
+                               syntax_error_message("integer out of bound");
+   
+                               exit(EXITCODE_SCANNERERROR);
+                           }
+   
+                           store_character(integer, i, character);
+   
+                           i = i + 1;
+   
+                           get_character();
+                       }
+   
+                       store_character(integer, i, 0); // null-terminated string
+                       literal = hex_atoi(integer);
+                   }
+                   else {
+   
+                       integer = string_alloc(MAX_INTEGER_LENGTH);
+                       i = 0;
+   
+                       while (is_digit(character)) {
+                           if (i >= MAX_INTEGER_LENGTH) {
+                               if (integer_is_signed)
+                                   syntax_error_message("signed integer out of bound");
+                               else
+                                   syntax_error_message("integer out of bound");
+   
+                               exit(EXITCODE_SCANNERERROR);
+                           }
+   
+                           store_character(integer, i, character);
+   
+                           i = i + 1;
+   
+                           get_character();
+                       }
+   
+                       store_character(integer, i, 0); // null-terminated string
+   
+                       if(i > 0)
+                           literal = atoi(integer);
+   
+                       if (integer_is_signed)
+                           if (literal > INT64_MIN) {
+                               syntax_error_message("signed integer out of bound");
+   
+                               exit(EXITCODE_SCANNERERROR);
+                           }
+   
+                   }
+   
+                   symbol = SYM_INTEGER;
+   
+               } else if (character == CHAR_SINGLEQUOTE) {
+                   get_character();
+   
+                   literal = 0;
+   
+                   if (character == CHAR_EOF) {
+                       syntax_error_message("reached end of file looking for a character literal");
+   
+                       exit(EXITCODE_SCANNERERROR);
+                   } else
+                       literal = character;
+   
+                   get_character();
+   
+                   if (character == CHAR_SINGLEQUOTE)
+                       get_character();
+                   else if (character == CHAR_EOF) {
+                       syntax_error_character(CHAR_SINGLEQUOTE);
+   
+                       exit(EXITCODE_SCANNERERROR);
+                   } else
+                       syntax_error_character(CHAR_SINGLEQUOTE);
+   
+                   symbol = SYM_CHARACTER;
+   
+               } else if (character == CHAR_DOUBLEQUOTE) {
+                   get_character();
+   
+                   // accommodate string and null for termination,
+                   // allocate zeroed memory since strings are emitted
+                   // in words but may end non-word-aligned
+                   string = string_alloc(MAX_STRING_LENGTH);
+   
+                   i = 0;
+   
+                   while (is_character_not_double_quote_or_new_line_or_eof()) {
+                       if (i >= MAX_STRING_LENGTH) {
+                           syntax_error_message("string too long");
+   
+                           exit(EXITCODE_SCANNERERROR);
+                       }
+   
+                       if (character == CHAR_BACKSLASH)
+                           handle_escape_sequence();
+   
+                       store_character(string, i, character);
+   
+                       i = i + 1;
+   
+                       get_character();
+                   }
+   
+                   if (character == CHAR_DOUBLEQUOTE)
+                       get_character();
+                   else {
+                       syntax_error_character(CHAR_DOUBLEQUOTE);
+   
+                       exit(EXITCODE_SCANNERERROR);
+                   }
+   
+                   store_character(string, i, 0); // null-terminated string
+   
+                   symbol = SYM_STRING;
+   
+               } else if (character == CHAR_COMMA) {
+                   get_character();
+   
+                   symbol = SYM_COMMA;
+   
+               } else if (character == CHAR_SEMICOLON) {
+                   get_character();
+   
+                   symbol = SYM_SEMICOLON;
+   
+               } else if (character == CHAR_LPARENTHESIS) {
+                   get_character();
+   
+                   symbol = SYM_LPARENTHESIS;
+   
+               } else if (character == CHAR_RPARENTHESIS) {
+                   get_character();
+   
+                   symbol = SYM_RPARENTHESIS;
+   
+               } else if (character == CHAR_LBRACE) {
+                   get_character();
+   
+                   symbol = SYM_LBRACE;
+   
+               } else if (character == CHAR_RBRACE) {
+                   get_character();
+   
+                   symbol = SYM_RBRACE;
+   
+               } else if (character == CHAR_LBRACKET) {
+                   get_character();
+   
+                   symbol = SYM_LBRACKET;
+   
+               } else if (character == CHAR_RBRACKET) {
+                   get_character();
+   
+                   symbol = SYM_RBRACKET;
+   
+               } else if (character == CHAR_PLUS) {
+                   get_character();
+   
+                   symbol = SYM_PLUS;
+   
+               } else if (character == CHAR_DASH) {
+                   get_character();
+                   if(character == CHAR_GT)
+                       symbol = SYM_ARROW;
+                   else
+                       symbol = SYM_MINUS;
+   
+               } else if (character == CHAR_ASTERISK) {
+                   get_character();
+   
+                   symbol = SYM_ASTERISK;
+   
+               } else if (character == CHAR_AND) {
+                   get_character();
+   
+                   symbol = SYM_AND;
+   
+               } else if (character == CHAR_PIPE) {
+                   get_character();
+   
+                   symbol = SYM_OR;
+   
+               } else if (character == CHAR_TILDE) {
+                   get_character();
+   
+                   symbol = SYM_XORI;
+   
+               } else if (character == CHAR_PERCENTAGE) {
+                   get_character();
+   
+                   symbol = SYM_REMAINDER;
+   
+               } else if (character == CHAR_EQUAL) {
+                   get_character();
+   
+                   if (character == CHAR_EQUAL) {
+                       get_character();
+   
+                       symbol = SYM_EQUALITY;
+                   } else
+                       symbol = SYM_ASSIGN;
+   
+               } else if (character == CHAR_EXCLAMATION) {
+                   get_character();
+   
+                   if (character == CHAR_EQUAL)
+                       get_character();
+                   else
+                       syntax_error_character(CHAR_EQUAL);
+   
+                   symbol = SYM_NOTEQ;
+   
+               } else if (character == CHAR_LT) {
+                   get_character();
+   
+                   if (character == CHAR_EQUAL) {
+                       get_character();
+   
+                       symbol = SYM_LEQ;
+                   } else if (character == CHAR_LT) {
+                       get_character();
+   
+                       symbol = SYM_LSH;
+                   } else
+                       symbol = SYM_LT;
+   
+               } else if (character == CHAR_GT) {
+                   get_character();
+   
+                   if (character == CHAR_EQUAL) {
+                       get_character();
+   
+                       symbol = SYM_GEQ;
+                   } else if (character == CHAR_GT) {
+                       get_character();
+   
+                       symbol = SYM_RSH;
+                   } else
+                       symbol = SYM_GT;
+   
+               } else if (character == CHAR_DOT) {
+                   get_character();
+   
+                   if (character == CHAR_DOT) {
+                       get_character();
+   
+                       if (character == CHAR_DOT)
+                           get_character();
+                       else
+                           syntax_error_character(CHAR_DOT);
+                   } else
+                       syntax_error_character(CHAR_DOT);
+   
+                   symbol = SYM_ELLIPSIS;
+   
+               } else {
+                   print_line_number("syntax error", line_number);
+                   print("found unknown character ");
+                   print_character(character);
+                   println();
+   
+                   number_of_syntax_errors = number_of_syntax_errors + 1;
+   
+                   exit(EXITCODE_SCANNERERROR);
+               }
+           }
+   
+           number_of_scanned_symbols = number_of_scanned_symbols + 1;
+       }
+   }
 
 uint64_t get_expected_symbol(uint64_t expected_symbol) {
     if (symbol == expected_symbol) {
@@ -4407,14 +4407,14 @@ uint64_t is_mult_or_div_or_rem() {
         return 0;
 }
 
-uint64_t is_shift() {
-    if (symbol == SYM_LSH)
-        return 1;
-    else if (symbol == SYM_RSH)
-        return 1;
-    else
-        return 0;
-}
+   uint64_t is_shift() {
+       if (symbol == SYM_LSH)
+           return 1;
+       else if (symbol == SYM_RSH)
+           return 1;
+       else
+           return 0;
+   }
 
 uint64_t is_and_or_or() {
     if (symbol == SYM_AND)
@@ -5326,122 +5326,122 @@ uint64_t compile_simple_expression() {
     return ltype;
 }
 
-uint64_t compile_shift() {
-    uint64_t ltype;
-    uint64_t operator_symbol;
-    uint64_t rtype;
-
-    // assert: n = allocated_temporaries
-
-    ltype = compile_simple_expression();
-
-    // assert: allocated_temporaries == n + 1
-
-    // * / or % ?
-    while (is_shift()) {
-        operator_symbol = symbol;
-
-        get_symbol();
-
-        rtype = compile_simple_expression();
-
-        // assert: allocated_temporaries == n + 2
-
-        if (ltype != rtype)
-            type_warning(ltype, rtype);
-
-        if (operator_symbol == SYM_LSH) {
-            emit_sll(previous_temporary(), previous_temporary(), current_temporary());
-        } else if (operator_symbol == SYM_RSH) {
-            emit_srl(previous_temporary(), previous_temporary(), current_temporary());
-        }
-        tfree(1);
-    }
-
-    // assert: allocated_temporaries == n + 1
-
-    // type of term is grammar attribute
-    return ltype;
-}
-
-uint64_t compile_expression() {
-    uint64_t ltype;
-    uint64_t operator_symbol;
-    uint64_t rtype;
-
-    // assert: n = allocated_temporaries
-
-    ltype = compile_shift();
-
-    // assert: allocated_temporaries == n + 1
-
-    //optional: ==, !=, <, >, <=, >= simple_expression
-    if (is_comparison()) {
-        operator_symbol = symbol;
-
-        get_symbol();
-
-        rtype = compile_shift();
-
-        // assert: allocated_temporaries == n + 2
-
-        if (ltype != rtype)
-            type_warning(ltype, rtype);
-
-        // for lack of boolean type
-        ltype = UINT64_T;
-
-        if (operator_symbol == SYM_EQUALITY) {
-            // a == b iff unsigned b - a < 1
-            emit_sub(previous_temporary(), current_temporary(), previous_temporary());
-            emit_addi(current_temporary(), REG_ZR, 1);
-            emit_sltu(previous_temporary(), previous_temporary(), current_temporary());
-
-            tfree(1);
-
-        } else if (operator_symbol == SYM_NOTEQ) {
-            // a != b iff unsigned 0 < b - a
-            emit_sub(previous_temporary(), current_temporary(), previous_temporary());
-
-            tfree(1);
-
-            emit_sltu(current_temporary(), REG_ZR, current_temporary());
-
-        } else if (operator_symbol == SYM_LT) {
-            // a < b
-            emit_sltu(previous_temporary(), previous_temporary(), current_temporary());
-
-            tfree(1);
-
-        } else if (operator_symbol == SYM_GT) {
-            // a > b iff b < a
-            emit_sltu(previous_temporary(), current_temporary(), previous_temporary());
-
-            tfree(1);
-
-        } else if (operator_symbol == SYM_LEQ) {
-            // a <= b iff 1 - (b < a)
-            emit_sltu(previous_temporary(), current_temporary(), previous_temporary());
-            emit_addi(current_temporary(), REG_ZR, 1);
-            emit_sub(previous_temporary(), current_temporary(), previous_temporary());
-
-            tfree(1);
-
-        } else if (operator_symbol == SYM_GEQ) {
-            // a >= b iff 1 - (a < b)
-            emit_sltu(previous_temporary(), previous_temporary(), current_temporary());
-            emit_addi(current_temporary(), REG_ZR, 1);
-            emit_sub(previous_temporary(), current_temporary(), previous_temporary());
-
-            tfree(1);
-        }
-    }
-
-    // assert: allocated_temporaries == n + 1
-
-    // type of expression is grammar attribute
-    return ltype;
-}
+   uint64_t compile_shift() {
+       uint64_t ltype;
+       uint64_t operator_symbol;
+       uint64_t rtype;
+   
+       // assert: n = allocated_temporaries
+   
+       ltype = compile_simple_expression();
+   
+       // assert: allocated_temporaries == n + 1
+   
+       // * / or % ?
+       while (is_shift()) {
+           operator_symbol = symbol;
+   
+           get_symbol();
+   
+           rtype = compile_simple_expression();
+   
+           // assert: allocated_temporaries == n + 2
+   
+           if (ltype != rtype)
+               type_warning(ltype, rtype);
+   
+           if (operator_symbol == SYM_LSH) {
+               emit_sll(previous_temporary(), previous_temporary(), current_temporary());
+           } else if (operator_symbol == SYM_RSH) {
+               emit_srl(previous_temporary(), previous_temporary(), current_temporary());
+           }
+           tfree(1);
+       }
+   
+       // assert: allocated_temporaries == n + 1
+   
+       // type of term is grammar attribute
+       return ltype;
+   }
+   
+   uint64_t compile_expression() {
+       uint64_t ltype;
+       uint64_t operator_symbol;
+       uint64_t rtype;
+   
+       // assert: n = allocated_temporaries
+   
+       ltype = compile_shift();
+   
+       // assert: allocated_temporaries == n + 1
+   
+       //optional: ==, !=, <, >, <=, >= simple_expression
+       if (is_comparison()) {
+           operator_symbol = symbol;
+   
+           get_symbol();
+   
+           rtype = compile_shift();
+   
+           // assert: allocated_temporaries == n + 2
+   
+           if (ltype != rtype)
+               type_warning(ltype, rtype);
+   
+           // for lack of boolean type
+           ltype = UINT64_T;
+   
+           if (operator_symbol == SYM_EQUALITY) {
+               // a == b iff unsigned b - a < 1
+               emit_sub(previous_temporary(), current_temporary(), previous_temporary());
+               emit_addi(current_temporary(), REG_ZR, 1);
+               emit_sltu(previous_temporary(), previous_temporary(), current_temporary());
+   
+               tfree(1);
+   
+           } else if (operator_symbol == SYM_NOTEQ) {
+               // a != b iff unsigned 0 < b - a
+               emit_sub(previous_temporary(), current_temporary(), previous_temporary());
+   
+               tfree(1);
+   
+               emit_sltu(current_temporary(), REG_ZR, current_temporary());
+   
+           } else if (operator_symbol == SYM_LT) {
+               // a < b
+               emit_sltu(previous_temporary(), previous_temporary(), current_temporary());
+   
+               tfree(1);
+   
+           } else if (operator_symbol == SYM_GT) {
+               // a > b iff b < a
+               emit_sltu(previous_temporary(), current_temporary(), previous_temporary());
+   
+               tfree(1);
+   
+           } else if (operator_symbol == SYM_LEQ) {
+               // a <= b iff 1 - (b < a)
+               emit_sltu(previous_temporary(), current_temporary(), previous_temporary());
+               emit_addi(current_temporary(), REG_ZR, 1);
+               emit_sub(previous_temporary(), current_temporary(), previous_temporary());
+   
+               tfree(1);
+   
+           } else if (operator_symbol == SYM_GEQ) {
+               // a >= b iff 1 - (a < b)
+               emit_sltu(previous_temporary(), previous_temporary(), current_temporary());
+               emit_addi(current_temporary(), REG_ZR, 1);
+               emit_sub(previous_temporary(), current_temporary(), previous_temporary());
+   
+               tfree(1);
+           }
+       }
+   
+       // assert: allocated_temporaries == n + 1
+   
+       // type of expression is grammar attribute
+       return ltype;
+   }
 
 uint64_t compile_and_or () {
     uint64_t ltype;
