@@ -1004,8 +1004,8 @@ uint64_t OP_SYSTEM = 115; // 1110011, I format (ECALL)
 // f3-codes
 uint64_t F3_AND   = 7; // 111
 uint64_t F3_OR    = 6; // 110
-uint64_t F3_SLL   = 1; // 001
-uint64_t F3_SRL   = 5; // 101
+   uint64_t F3_SLL   = 1; // 001
+   uint64_t F3_SRL   = 5; // 101
 uint64_t F3_NOP   = 0; // 000
 uint64_t F3_ADDI  = 0; // 000
 uint64_t F3_XORI  = 4; // 100
@@ -1026,8 +1026,8 @@ uint64_t F3_ECALL = 0; // 000
 // f7-codes
 uint64_t F7_AND  = 0;  // 0000000
 uint64_t F7_OR   = 0;  // 0000000
-uint64_t F7_SLL  = 0;  // 0000000
-uint64_t F7_SRL  = 0;  // 0000000
+   uint64_t F7_SLL  = 0;  // 0000000
+   uint64_t F7_SRL  = 0;  // 0000000
 uint64_t F7_ADD  = 0;  // 0000000
 uint64_t F7_MUL  = 1;  // 0000001
 uint64_t F7_SUB  = 32; // 0100000
@@ -1088,8 +1088,8 @@ void emit_xori(uint64_t rd, uint64_t rs1, uint64_t immediate);
 
 void emit_and(uint64_t rd, uint64_t rs1, uint64_t rs2);
 void emit_or(uint64_t rd, uint64_t rs1, uint64_t rs2);
-void emit_sll(uint64_t rd, uint64_t rs1, uint64_t rs2);
-void emit_srl(uint64_t rd, uint64_t rs1, uint64_t rs2);
+   void emit_sll(uint64_t rd, uint64_t rs1, uint64_t rs2);
+   void emit_srl(uint64_t rd, uint64_t rs1, uint64_t rs2);
 void emit_add(uint64_t rd, uint64_t rs1, uint64_t rs2);
 void emit_sub(uint64_t rd, uint64_t rs1, uint64_t rs2);
 void emit_mul(uint64_t rd, uint64_t rs1, uint64_t rs2);
@@ -1206,8 +1206,8 @@ uint64_t p_align = 4096; // alignment of segment: p_vaddr % p_align == p_offset 
 uint64_t ic_xori  = 0;
 uint64_t ic_and   = 0;
 uint64_t ic_or    = 0;
-uint64_t ic_sll   = 0;
-uint64_t ic_srl   = 0;
+   uint64_t ic_sll   = 0;
+   uint64_t ic_srl   = 0;
 uint64_t ic_lui   = 0;
 uint64_t ic_addi  = 0;
 uint64_t ic_add   = 0;
@@ -1259,8 +1259,8 @@ void reset_instruction_counters() {
     ic_xori  = 0;
     ic_and   = 0;
     ic_or    = 0;
-    ic_sll   = 0;
-    ic_srl   = 0;
+       ic_sll   = 0;
+       ic_srl   = 0;
     ic_lui   = 0;
     ic_addi  = 0;
     ic_add   = 0;
@@ -1768,8 +1768,8 @@ void do_xori();
 void do_and();
 void do_or();
 void do_add();
-void do_sll();
-void do_srl();
+   void do_sll();
+   void do_srl();
 void do_sub();
 void do_mul();
 void do_divu();
@@ -7425,17 +7425,17 @@ void emit_add(uint64_t rd, uint64_t rs1, uint64_t rs2) {
     ic_add = ic_add + 1;
 }
 
-void emit_sll(uint64_t rd, uint64_t rs1, uint64_t rs2) {
-    emit_instruction(encode_r_format(F7_SLL, rs2, rs1, F3_SLL, rd, OP_OP));
-
-    ic_sll = ic_sll + 1;
-}
-
-void emit_srl(uint64_t rd, uint64_t rs1, uint64_t rs2) {
-    emit_instruction(encode_r_format(F7_SRL, rs2, rs1, F3_SRL, rd, OP_OP));
-
-    ic_srl = ic_srl + 1;
-}
+   void emit_sll(uint64_t rd, uint64_t rs1, uint64_t rs2) {
+       emit_instruction(encode_r_format(F7_SLL, rs2, rs1, F3_SLL, rd, OP_OP));
+   
+       ic_sll = ic_sll + 1;
+   }
+   
+   void emit_srl(uint64_t rd, uint64_t rs1, uint64_t rs2) {
+       emit_instruction(encode_r_format(F7_SRL, rs2, rs1, F3_SRL, rd, OP_OP));
+   
+       ic_srl = ic_srl + 1;
+   }
 
 void emit_xori(uint64_t rd, uint64_t rs1, uint64_t immediate) {
     emit_instruction(encode_i_format(immediate, rs1, F3_XORI, rd, OP_IMM));
@@ -9977,53 +9977,53 @@ void do_or() {
     ic_or = ic_or + 1;
 }
 
-void do_sll() {
-    uint64_t next_rd_value;
-
-    read_register(rs1);
-    read_register(rs2);
-
-    if (rd != REG_ZR) {
-        // semantics of add
-        next_rd_value = *(registers + rs1) << *(registers + rs2);
-
-        if (*(registers + rd) != next_rd_value)
-            *(registers + rd) = next_rd_value;
-        else
-            nopc_sll = nopc_sll + 1;
-    } else
-        nopc_sll = nopc_sll + 1;
-
-    write_register(rd);
-
-    pc = pc + INSTRUCTIONSIZE;
-
-    ic_sll = ic_sll + 1;
-}
-
-void do_srl() {
-    uint64_t next_rd_value;
-
-    read_register(rs1);
-    read_register(rs2);
-
-    if (rd != REG_ZR) {
-        // semantics of add
-        next_rd_value = *(registers + rs1) >> *(registers + rs2);
-
-        if (*(registers + rd) != next_rd_value)
-            *(registers + rd) = next_rd_value;
-        else
-            nopc_srl = nopc_srl + 1;
-    } else
-        nopc_srl = nopc_srl + 1;
-
-    write_register(rd);
-
-    pc = pc + INSTRUCTIONSIZE;
-
-    ic_srl = ic_srl + 1;
-}
+   void do_sll() {
+       uint64_t next_rd_value;
+   
+       read_register(rs1);
+       read_register(rs2);
+   
+       if (rd != REG_ZR) {
+           // semantics of add
+           next_rd_value = *(registers + rs1) << *(registers + rs2);
+   
+           if (*(registers + rd) != next_rd_value)
+               *(registers + rd) = next_rd_value;
+           else
+               nopc_sll = nopc_sll + 1;
+       } else
+           nopc_sll = nopc_sll + 1;
+   
+       write_register(rd);
+   
+       pc = pc + INSTRUCTIONSIZE;
+   
+       ic_sll = ic_sll + 1;
+   }
+   
+   void do_srl() {
+       uint64_t next_rd_value;
+   
+       read_register(rs1);
+       read_register(rs2);
+   
+       if (rd != REG_ZR) {
+           // semantics of add
+           next_rd_value = *(registers + rs1) >> *(registers + rs2);
+   
+           if (*(registers + rd) != next_rd_value)
+               *(registers + rd) = next_rd_value;
+           else
+               nopc_srl = nopc_srl + 1;
+       } else
+           nopc_srl = nopc_srl + 1;
+   
+       write_register(rd);
+   
+       pc = pc + INSTRUCTIONSIZE;
+   
+       ic_srl = ic_srl + 1;
+   }
 
 void do_add() {
     uint64_t next_rd_value;
