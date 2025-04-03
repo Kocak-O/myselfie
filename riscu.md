@@ -2,7 +2,7 @@ Copyright (c) the Selfie Project authors. All rights reserved. Please see the AU
 
 Selfie is a project of the Computational Systems Group at the Department of Computer Sciences of the University of Salzburg in Austria. For further information and code please refer to:
 
-selfie.cs.uni-salzburg.at
+http://selfie.cs.uni-salzburg.at
 
 This document provides an overview of the RISC-U instruction set. RISC-U is a tiny subset of the 64-bit [RISC-V](https://en.wikipedia.org/wiki/RISC-V) instruction set. The selfie system implements a compiler that targets RISC-U as well as a RISC-U emulator that interprets RISC-U code. RISC-U consists of just 14 instructions listed below. For details on the exact encoding, decoding, and semantics of RISC-U code see the selfie implementation.
 
@@ -40,9 +40,26 @@ The parameter `imm` denotes a signed integer value represented by a fixed number
 
 `mul rd,rs1,rs2`: `rd = rs1 * rs2; pc = pc + 4`
 
+`sll rd,rs1,rs2`: `rd = rs1 << rs2; pc = pc + 4`
+
+`srl rd,rs1,rs2`: `rd = rs1 >> rs2; pc = pc + 4`
+
 `divu rd,rs1,rs2`: `rd = rs1 / rs2; pc = pc + 4` where the values of `rs1` and `rs2` are interpreted as unsigned integers.
 
 `remu rd,rs1,rs2`: `rd = rs1 % rs2; pc = pc + 4` where the values of `rs1` and `rs2` are interpreted as unsigned integers.
+
+#### Bitwise
+
+`sll rd,rs1,rs2`: `rd = rs1 << rs2; pc = pc + 4`
+
+`srl rd,rs1,rs2`: `rd = rs1 >> rs2; pc = pc + 4`
+
+`and rd,rs1,rs2`: `rd = rs1 & rs2; pc = pc + 4`
+
+`or rd,rs1,rs2` : `rd = rs1 | rs2; pc = pc + 4`
+
+`xori rd,rs1,imm`: `rd = ~rs1; pc = pc + 4` with `-2^11 <= imm < 2^11`
+
 
 #### Comparison
 
@@ -58,4 +75,4 @@ The parameter `imm` denotes a signed integer value represented by a fixed number
 
 #### System
 
-`ecall`: system call number is in `a7`, arguments are in `a0-a3`, return value is in `a0`.
+`ecall`: system call number is in `a7`, actual parameters are in `a0-a3`, return value is in `a0`.
