@@ -45,13 +45,13 @@ This choice turns out to be helpful for students to understand the
 true role of composite data types such as arrays and records.
 Bitwise operations are implemented in libcstar using unsigned integer
 arithmetics helping students better understand arithmetic operators.
-C* is supposed to be close to the minimum necessary for implementing
+C* is supposed to be close to the minimum necessary  implementing
 a self-compiling, single-pass, recursive-descent compiler. C* can be
 taught in one to two weeks of classes depending on student background.
 
 The compiler can readily be extended to compile features missing in C*
-and to improve performance of the generated code. The compiler generates
-RISC-U executables in ELF format that are compatible with the official
+and to improve permance of the generated code. The compiler generates
+RISC-U executables in ELF mat that are compatible with the official
 RISC-V toolchain. The mipster emulator can execute RISC-U executables
 loaded from file but also from memory immediately after code generation
 without going through the file system.
@@ -102,9 +102,9 @@ uint64_t open(char* filename, uint64_t flags, ...);
 void* malloc(unsigned long);
 
 // selfie bootstraps the following *printf procedures
-int printf(const char* format, ...);
-int sprintf(char* str, const char* format, ...);
-int dprintf(int fd, const char* format, ...);
+int printf(const char* mat, ...);
+int sprintf(char* str, const char* mat, ...);
+int dprintf(int fd, const char* mat, ...);
 
 // -----------------------------------------------------------------
 // ----------------------- LIBRARY PROCEDURES ----------------------
@@ -155,8 +155,8 @@ uint64_t fixed_point_percentage(uint64_t r, uint64_t f);
 uint64_t fixed_point_integral(uint64_t a, uint64_t f);
 uint64_t fixed_point_fractional(uint64_t a, uint64_t f);
 
-uint64_t ratio_format_integral_2(uint64_t a, uint64_t b);
-uint64_t ratio_format_fractional_2(uint64_t a, uint64_t b);
+uint64_t ratio_mat_integral_2(uint64_t a, uint64_t b);
+uint64_t ratio_mat_fractional_2(uint64_t a, uint64_t b);
 
 uint64_t percentage_format_integral_2(uint64_t a, uint64_t b);
 uint64_t percentage_format_fractional_2(uint64_t a, uint64_t b);
@@ -472,7 +472,7 @@ uint64_t SYM_LBRACKET     = 34; // [
 uint64_t SYM_RBRACKET     = 35; // ]
 uint64_t SYM_ARROW        = 36; // ->
 uint64_t SYM_STRUCT       = 37; // struct
-uint64_t SYM_FOR          = 38; // for
+   uint64_t SYM_FOR          = 38; // for   
 
 // symbols for bootstrapping
 
@@ -558,7 +558,7 @@ void init_scanner () {
     *(SYMBOLS + SYM_RBRACKET)     = (uint64_t) "]";
     *(SYMBOLS + SYM_ARROW)        = (uint64_t) "->";
     *(SYMBOLS + SYM_STRUCT)       = (uint64_t) "struct";
-    *(SYMBOLS + SYM_FOR)          = (uint64_t) "for";
+       *(SYMBOLS + SYM_FOR)          = (uint64_t) "for";
 
     *(SYMBOLS + SYM_INT)      = (uint64_t) "int";
     *(SYMBOLS + SYM_CHAR)     = (uint64_t) "char";
@@ -749,7 +749,7 @@ uint64_t  compile_and_or();
 uint64_t  compile_array();
 void      compile_struct();
 void      compile_while();
-void      compile_for();
+   void      compile_for();
 void      compile_if();
 void      compile_return();
 void      compile_statement();
@@ -774,7 +774,7 @@ uint64_t number_of_assignments = 0;
 uint64_t number_of_while       = 0;
 uint64_t number_of_if          = 0;
 uint64_t number_of_return      = 0;
-uint64_t number_of_for         = 0;
+   uint64_t number_of_for         = 0;
 
 // ------------------------- INITIALIZATION ------------------------
 
@@ -784,7 +784,7 @@ void reset_parser() {
     number_of_while       = 0;
     number_of_if          = 0;
     number_of_return      = 0;
-    number_of_for         = 0;
+       number_of_for         = 0;
 
     number_of_syntax_errors = 0;
 
@@ -3825,7 +3825,7 @@ uint64_t identifier_or_keyword() {
         return SYM_WHILE;
     else if (identifier_string_match(SYM_STRUCT))
         return SYM_STRUCT;
-    else if (identifier_string_match(SYM_FOR))
+       else if (identifier_string_match(SYM_FOR))
         return SYM_FOR;
     else if (identifier_string_match(SYM_INT))
         // selfie bootstraps int to uint64_t!
@@ -5601,37 +5601,37 @@ void compile_while() {
     number_of_while = number_of_while + 1;
 }
 
-void compile_for() {
-    uint64_t jump_back_to_for;
-    uint64_t branch_forward_to_end;
-
-    jump_back_to_for = 0;
-
-    branch_forward_to_end = 0;
-
-    if (symbol == SYM_FOR) {
-        get_symbol();
-
-        if(symbol == SYM_LPARENTHESIS) {
-            get_symbol();
-
-            compile_statement();
-
-            jump_back_to_for = code_size;
-
-            compile_and_or();
-
-            // we do not know where to branch, fixup later
-            branch_forward_to_end = code_size;
-
-            emit_beq(current_temporary(), REG_ZR, 0);
-
-            tfree(1);
-
-            if(symbol == SYM_RPARENTHESIS)
-                syntax_error_symbol(SYM_RPARENTHESIS);
-
-            get_symbol();
+   void compile_for() {
+       uint64_t jump_back_to_for;
+       uint64_t branch_forward_to_end;
+   
+       jump_back_to_for = 0;
+   
+       branch_forward_to_end = 0;
+   
+       if (symbol == SYM_FOR) {
+           get_symbol();
+   
+           if(symbol == SYM_LPARENTHESIS) {
+               get_symbol();
+   
+               compile_statement();
+   
+               jump_back_to_for = code_size;
+   
+               compile_and_or();
+   
+               // we do not know where to branch, fixup later
+               branch_forward_to_end = code_size;
+   
+               emit_beq(current_temporary(), REG_ZR, 0);
+   
+               tfree(1);
+   
+               if(symbol == SYM_RPARENTHESIS)
+                   syntax_error_symbol(SYM_RPARENTHESIS);
+   
+               get_symbol();
             compile_statement();
 
             if (symbol == SYM_LBRACE) {
@@ -5661,7 +5661,7 @@ void compile_for() {
 
     // assert: allocated_temporaries == 0
 
-    number_of_for = number_of_for + 1;
+       number_of_for = number_of_for + 1;
 }
 
 void compile_if() {
@@ -5960,9 +5960,9 @@ void compile_statement() {
         compile_while();
     }
         // for statement?
-    else if (symbol == SYM_FOR) {
-        compile_for();
-    }
+       else if (symbol == SYM_FOR) {
+           compile_for();
+       }
         // if statement?
     else if (symbol == SYM_IF) {
         compile_if();
