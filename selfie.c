@@ -468,8 +468,8 @@ uint64_t SYM_LSH          = 30; // <<
 uint64_t SYM_AND          = 31; // &
 uint64_t SYM_OR           = 32; // |
 uint64_t SYM_XORI         = 33; // ~
-uint64_t SYM_LBRACKET     = 34; // [
-uint64_t SYM_RBRACKET     = 35; // ]
+   uint64_t SYM_LBRACKET     = 34; // [
+   uint64_t SYM_RBRACKET     = 35; // ]
 uint64_t SYM_ARROW        = 36; // ->
 uint64_t SYM_STRUCT       = 37; // struct
    uint64_t SYM_FOR          = 38; // for   
@@ -554,8 +554,8 @@ void init_scanner () {
     *(SYMBOLS + SYM_AND)          = (uint64_t) "&";
     *(SYMBOLS + SYM_OR)           = (uint64_t) "|";
     *(SYMBOLS + SYM_XORI)         = (uint64_t) "~";
-    *(SYMBOLS + SYM_LBRACKET)     = (uint64_t) "[";
-    *(SYMBOLS + SYM_RBRACKET)     = (uint64_t) "]";
+       *(SYMBOLS + SYM_LBRACKET)     = (uint64_t) "[";
+       *(SYMBOLS + SYM_RBRACKET)     = (uint64_t) "]";
     *(SYMBOLS + SYM_ARROW)        = (uint64_t) "->";
     *(SYMBOLS + SYM_STRUCT)       = (uint64_t) "struct";
        *(SYMBOLS + SYM_FOR)          = (uint64_t) "for";
@@ -4043,17 +4043,17 @@ uint64_t identifier_or_keyword() {
    
                    symbol = SYM_RBRACE;
    
-               } else if (character == CHAR_LBRACKET) {
-                   get_character();
-   
-                   symbol = SYM_LBRACKET;
-   
-               } else if (character == CHAR_RBRACKET) {
-                   get_character();
-   
-                   symbol = SYM_RBRACKET;
-   
-               } else if (character == CHAR_PLUS) {
+                  } else if (character == CHAR_LBRACKET) {
+                      get_character();
+      
+                      symbol = SYM_LBRACKET;
+      
+                  } else if (character == CHAR_RBRACKET) {
+                      get_character();
+      
+                      symbol = SYM_RBRACKET;
+      
+                  } else if (character == CHAR_PLUS) {
                    get_character();
    
                    symbol = SYM_PLUS;
@@ -4795,34 +4795,34 @@ void load_string(char* string) {
     // assert: allocated_temporaries == n + 1
 }
 
-uint64_t load_array(char* variable, uint64_t size) {
-    uint64_t* entry;
-    uint64_t offset;
-
-    entry = get_array(variable);
-    offset = get_address(entry) + (WORDSIZE * size);
-
-    if (is_signed_integer(offset, 12)) {
-        talloc();
-        emit_load(current_temporary(), get_scope(entry), offset);
-    } else {
-        load_upper_base_address(entry);
-        emit_load(current_temporary(), current_temporary(), sign_extend(get_bits(offset, 0, 12), 12));
-    }
-
-    return get_type(entry);
-}
-
-uint64_t* get_array(char* variable) {
-    uint64_t* entry;
-
-    entry = get_scoped_symbol_table_entry(variable, ARRAY);
-
-    if(entry != (uint64_t*) 0)
-        return entry;
-    else
-        exit(EXITCODE_PARSERERROR);
-}
+      uint64_t load_array(char* variable, uint64_t size) {
+          uint64_t* entry;
+          uint64_t offset;
+      
+          entry = get_array(variable);
+          offset = get_address(entry) + (WORDSIZE * size);
+      
+          if (is_signed_integer(offset, 12)) {
+              talloc();
+              emit_load(current_temporary(), get_scope(entry), offset);
+          } else {
+              load_upper_base_address(entry);
+              emit_load(current_temporary(), current_temporary(), sign_extend(get_bits(offset, 0, 12), 12));
+          }
+      
+          return get_type(entry);
+      }
+   
+   uint64_t* get_array(char* variable) {
+       uint64_t* entry;
+   
+       entry = get_scoped_symbol_table_entry(variable, ARRAY);
+   
+       if(entry != (uint64_t*) 0)
+           return entry;
+       else
+           exit(EXITCODE_PARSERERROR);
+   }
 
 uint64_t procedure_call(uint64_t* entry, char* procedure, uint64_t number_of_parameters) {
     uint64_t type;
@@ -5122,14 +5122,14 @@ uint64_t compile_factor() {
             // reset return register to initial return value
             // for missing return expressions
             emit_addi(REG_A0, REG_ZR, 0);
-        } else if (symbol == SYM_LBRACKET) {
-            array_size = compile_array();
-
-            while(symbol == SYM_LBRACKET)
-                array_size = array_size * compile_array();
-
-            type = load_array(variable_or_procedure_name, array_size);
-        } else if(get_scoped_symbol_table_entry(variable_or_procedure_name, ARRAY) == (uint64_t*) 0) {
+           } else if (symbol == SYM_LBRACKET) {
+               array_size = compile_array();
+   
+               while(symbol == SYM_LBRACKET)
+                   array_size = array_size * compile_array();
+   
+               type = load_array(variable_or_procedure_name, array_size);
+           } else if(get_scoped_symbol_table_entry(variable_or_procedure_name, ARRAY) == (uint64_t*) 0) {
             type = load_variable_or_big_int(variable_or_procedure_name, VARIABLE);
         } else {
             // variable access: identifier
@@ -5486,24 +5486,24 @@ uint64_t compile_array() {
 
     size = 0;
 
-    if(symbol == SYM_LBRACKET) {
-        get_symbol();
-
-        if(symbol == SYM_INTEGER) {
-            size = literal;
-            get_symbol();
-        } else {
-            size = compile_and_or();
-            get_symbol();
-        }
-        if(symbol == SYM_RBRACKET)
-            get_symbol();
-    }
-    else {
-        syntax_error_unexpected();
-    }
-    return size;
-}
+       if(symbol == SYM_LBRACKET) {
+           get_symbol();
+   
+           if(symbol == SYM_INTEGER) {
+               size = literal;
+               get_symbol();
+           } else {
+               size = compile_and_or();
+               get_symbol();
+           }
+           if(symbol == SYM_RBRACKET)
+               get_symbol();
+       }
+       else {
+           syntax_error_unexpected();
+       }
+       return size;
+   }
 
 void compile_struct() {
     uint64_t type;
@@ -5875,48 +5875,48 @@ void compile_statement() {
             get_expected_symbol(SYM_SEMICOLON);
 
             // variable "=" expression
-        } else if (symbol == SYM_LBRACKET) {
-            is_array = 1;
-            array_size = compile_array();
-
-            while(symbol == SYM_LBRACKET)
-                array_size = array_size * compile_array();
-
-            if (symbol == SYM_ASSIGN) {
-
-                entry = get_array(variable_or_procedure_name);
-
-                ltype = get_type(entry);
-
-                get_symbol();
-
-                rtype = compile_and_or();
-
-                if (ltype != rtype)
-                    type_warning(ltype, rtype);
-
-                offset = get_address(entry);
-
-                if (is_signed_integer(offset, 12)) {
-                    emit_store(get_scope(entry), offset, current_temporary());
-
-                    tfree(1);
-                } else {
-                    load_upper_base_address(entry);
-
-                    emit_store(current_temporary(), sign_extend(get_bits(offset, 0, 12), 12), previous_temporary());
-
-                    tfree(2);
-                }
-
-                number_of_assignments = number_of_assignments + 1;
-
-                if (symbol == SYM_SEMICOLON)
-                    get_symbol();
-                else
-                    syntax_error_symbol(SYM_SEMICOLON);
-            }
-        } else if (symbol == SYM_ASSIGN) {
+           } else if (symbol == SYM_LBRACKET) {
+               is_array = 1;
+               array_size = compile_array();
+   
+               while(symbol == SYM_LBRACKET)
+                   array_size = array_size * compile_array();
+   
+               if (symbol == SYM_ASSIGN) {
+   
+                   entry = get_array(variable_or_procedure_name);
+   
+                   ltype = get_type(entry);
+   
+                   get_symbol();
+   
+                   rtype = compile_and_or();
+   
+                   if (ltype != rtype)
+                       type_warning(ltype, rtype);
+   
+                   offset = get_address(entry);
+   
+                   if (is_signed_integer(offset, 12)) {
+                       emit_store(get_scope(entry), offset, current_temporary());
+   
+                       tfree(1);
+                   } else {
+                       load_upper_base_address(entry);
+   
+                       emit_store(current_temporary(), sign_extend(get_bits(offset, 0, 12), 12), previous_temporary());
+   
+                       tfree(2);
+                   }
+   
+                   number_of_assignments = number_of_assignments + 1;
+   
+                   if (symbol == SYM_SEMICOLON)
+                       get_symbol();
+                   else
+                       syntax_error_symbol(SYM_SEMICOLON);
+               }
+           } else if (symbol == SYM_ASSIGN) {
             entry = get_variable_or_big_int(variable_or_procedure_name, VARIABLE);
 
             if(is_array == 1) {
@@ -6333,28 +6333,28 @@ void compile_cstar() {
                     // procedure declaration or definition
                     compile_procedure(variable_or_procedure_name, type);
                 else {
-                    if(symbol == SYM_LBRACKET) {
-                        array_size = compile_array();
-
-                        while(symbol == SYM_LBRACKET)
-                            array_size = array_size * compile_array();
-
-                        is_array = 1;
-                        type = UINT64_T;
-                    }
-
-                    current_line_number = line_number;
-
-                    if(type == STRUCT) {
-                        if(symbol == SYM_ASTERISK) {
-                            get_symbol();
-                            variable_or_procedure_name = identifier;
-                            type = UINT64STAR_T;
-                            get_symbol();
-                        }
-                        else
-                            compile_struct();
-                    }
+                       if(symbol == SYM_LBRACKET) {
+                           array_size = compile_array();
+   
+                           while(symbol == SYM_LBRACKET)
+                               array_size = array_size * compile_array();
+   
+                           is_array = 1;
+                           type = UINT64_T;
+                       }
+   
+                       current_line_number = line_number;
+   
+                       if(type == STRUCT) {
+                           if(symbol == SYM_ASTERISK) {
+                               get_symbol();
+                               variable_or_procedure_name = identifier;
+                               type = UINT64STAR_T;
+                               get_symbol();
+                           }
+                           else
+                               compile_struct();
+                       }
 
                     if (symbol == SYM_SEMICOLON) {
                         // type identifier ";" ...
