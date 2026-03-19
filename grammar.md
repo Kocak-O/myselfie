@@ -15,7 +15,7 @@ C\* Symbols: `integer`, `character`, `string`, `identifier`, `,`, `;`, `(`, `)`,
 with:
 
 ```
-integer    = digit { digit } .
+integer = digit { digit } | "0x" hex { hex } .
 
 character  = "'" printable_character "'" .
 
@@ -30,6 +30,10 @@ and:
 digit  = "0" | ... | "9" .
 
 letter = "a" | ... | "z" | "A" | ... | "Z" .
+
+hex = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+    | "A" | "B" | "C" | "D" | "E" | "F"
+    | "a" | "b" | "c" | "d" | "e" | "f" .
 ```
 
 C\* Grammar:

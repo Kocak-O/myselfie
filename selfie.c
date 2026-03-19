@@ -478,6 +478,7 @@ uint64_t* SYMBOLS; // strings representing symbols
 uint64_t MAX_IDENTIFIER_LENGTH = 64;  // maximum number of characters in an identifier
 uint64_t MAX_INTEGER_LENGTH    = 20;  // maximum number of characters in an unsigned integer
 uint64_t MAX_STRING_LENGTH     = 128; // maximum number of characters in a string
+uint64_t MAX_HEX_LENGTH        = 16;
 
 // ------------------------ GLOBAL VARIABLES -----------------------
 
@@ -2811,6 +2812,17 @@ char* store_character(char* s, uint64_t i, char c) {
   return s;
 }
 
+uint64_t is_hex(char c){
+    if (c >= 'A'){
+        if (c <= 'F'){
+            return 1;
+        } else
+            return is_digit(c);
+    } else{
+        return is_digit(c);
+    }
+}
+
 uint64_t is_letter(char c) {
   // ASCII codes for lower- and uppercase letters are in contiguous intervals
   if (c >= 'a')
@@ -3794,53 +3806,48 @@ void get_symbol() {
 
         symbol = identifier_or_keyword();
       } else if (is_digit(character)) {
-        if (character == '0') {
-          // 0 is 0, not 00, 000, etc.
-          get_character();
-
-          literal = 0;
-        } else {
-          // accommodate integer and null for termination
           integer = string_alloc(MAX_INTEGER_LENGTH);
-
           i = 0;
 
-          while (is_digit(character)) {
-            if (i >= MAX_INTEGER_LENGTH) {
-              if (integer_is_signed)
-                syntax_error_message("signed integer out of bound");
-              else
-                syntax_error_message("unsigned integer out of bound");
+          if (character == '0') {
+              store_character(integer, i, character);
+              i = i + 1;
 
-              exit(EXITCODE_SCANNERERROR);
-            }
+              get_character();
 
-            store_character(integer, i, character);
+              if (character == 'x') {
+                  get_character();
 
-            i = i + 1;
+                  integer = string_alloc(MAX_HEX_INTEGER_LENGTH);
+                  i = 0;
 
-            get_character();
+                  while (is_hex(character)) {
+                      store_character(integer, i, character);
+                      i = i + 1;
+
+                      get_character();
+                  }
+
+                  store_character(integer, i, 0);
+
+                  literal = hex_atoi(integer);
+              } else {
+                  literal = 0;
+              }
+          } else {
+              while (is_digit(character)) {
+                  store_character(integer, i, character);
+                  i = i + 1;
+
+                  get_character();
+              }
+
+              store_character(integer, i, 0);
+
+              literal = atoi(integer);
           }
 
-          store_character(integer, i, 0); // null-terminated string
-
-          literal = atoi(integer);
-
-          if (integer_is_signed) {
-            if (literal > INT_MIN) {
-              syntax_error_message("signed integer out of target bound");
-
-              exit(EXITCODE_SCANNERERROR);
-            }
-          } else if (literal > UINT_MAX) {
-            syntax_error_message("unsigned integer out of target bound");
-
-            exit(EXITCODE_SCANNERERROR);
-          } else if (literal >= INT_MIN)
-            literal = sign_extend(literal, WORDSIZEINBITS);
-        }
-
-        symbol = SYM_INTEGER;
+          symbol = SYM_INTEGER;
       } else if (character == CHAR_SINGLEQUOTE) {
         get_character();
 
@@ -4793,6 +4800,34 @@ uint64_t* get_variable_entry(char* variable) {
 
 uint64_t load_variable(char* variable) {
   return load_value(get_variable_entry(variable));
+}
+
+uint64_t hex_atoi(char* s) {
+    uint64_t i;
+    uint64_t n;
+    uint64_t c;
+
+    i = 0;
+    n = 0;
+
+    c = load_character(s, i);
+
+    while (c != 0) {
+
+        if (c >= '0' && c <= '9')
+            c = c - '0';
+        else if (c >= 'A' && c <= 'F')
+            c = c - 'A' + 10;
+        else if (c >= 'a' && c <= 'f')
+            c = c - 'a' + 10;
+
+        n = n * 16 + c;
+
+        i = i + 1;
+        c = load_character(s, i);
+    }
+
+    return n;
 }
 
 void compile_assignment(char* variable) {
